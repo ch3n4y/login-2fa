@@ -70,17 +70,38 @@ jobs:
           - name: linux-amd64
             goarch: amd64
             archive: pam_login_2fa-linux-amd64.tar.gz
+            prepare: ""
             install: sudo apt-get update && sudo apt-get install -y libpam0g-dev
             cc: gcc
           - name: linux-arm64
             goarch: arm64
             archive: pam_login_2fa-linux-arm64.tar.gz
+            prepare: |
+              sudo sed -i 's/^Architectures: .*/Architectures: amd64/' /etc/apt/sources.list.d/ubuntu.sources
+              cat <<'EOF' | sudo tee /etc/apt/sources.list.d/ubuntu-ports.sources >/dev/null
+              Types: deb
+              URIs: http://ports.ubuntu.com/ubuntu-ports
+              Suites: noble noble-updates noble-backports noble-security
+              Components: main universe restricted multiverse
+              Architectures: arm64
+              Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+              EOF
             install: sudo dpkg --add-architecture arm64 && sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libpam0g-dev:arm64
             cc: aarch64-linux-gnu-gcc
           - name: linux-armv7
             goarch: arm
             goarm: "7"
             archive: pam_login_2fa-linux-armv7.tar.gz
+            prepare: |
+              sudo sed -i 's/^Architectures: .*/Architectures: amd64/' /etc/apt/sources.list.d/ubuntu.sources
+              cat <<'EOF' | sudo tee /etc/apt/sources.list.d/ubuntu-ports.sources >/dev/null
+              Types: deb
+              URIs: http://ports.ubuntu.com/ubuntu-ports
+              Suites: noble noble-updates noble-backports noble-security
+              Components: main universe restricted multiverse
+              Architectures: armhf
+              Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+              EOF
             install: sudo dpkg --add-architecture armhf && sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf libc6-dev-armhf-cross libpam0g-dev:armhf
             cc: arm-linux-gnueabihf-gcc
     steps:
@@ -95,6 +116,12 @@ jobs:
 
       - name: Download modules
         run: go mod download
+
+      - name: Prepare ARM apt sources
+        if: matrix.prepare != ''
+        run: |
+          set -e
+          ${{ matrix.prepare }}
 
       - name: Install PAM toolchain and headers
         run: ${{ matrix.install }}
