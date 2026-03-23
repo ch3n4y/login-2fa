@@ -77,14 +77,16 @@ jobs:
             goarch: arm64
             archive: pam_login_2fa-linux-arm64.tar.gz
             prepare: |
-              sudo sed -i 's/^Architectures: .*/Architectures: amd64/' /etc/apt/sources.list.d/ubuntu.sources
-              cat <<'EOF' | sudo tee /etc/apt/sources.list.d/ubuntu-ports.sources >/dev/null
-              Types: deb
-              URIs: http://ports.ubuntu.com/ubuntu-ports
-              Suites: noble noble-updates noble-backports noble-security
-              Components: main universe restricted multiverse
-              Architectures: arm64
-              Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+              sudo rm -f /etc/apt/sources.list.d/*.sources
+              cat <<'EOF' | sudo tee /etc/apt/sources.list >/dev/null
+              deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main universe restricted multiverse
+              deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main universe restricted multiverse
+              deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-backports main universe restricted multiverse
+              deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main universe restricted multiverse
+              deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe restricted multiverse
+              deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe restricted multiverse
+              deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main universe restricted multiverse
+              deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main universe restricted multiverse
               EOF
             install: sudo dpkg --add-architecture arm64 && sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libpam0g-dev:arm64
             cc: aarch64-linux-gnu-gcc
@@ -93,14 +95,16 @@ jobs:
             goarm: "7"
             archive: pam_login_2fa-linux-armv7.tar.gz
             prepare: |
-              sudo sed -i 's/^Architectures: .*/Architectures: amd64/' /etc/apt/sources.list.d/ubuntu.sources
-              cat <<'EOF' | sudo tee /etc/apt/sources.list.d/ubuntu-ports.sources >/dev/null
-              Types: deb
-              URIs: http://ports.ubuntu.com/ubuntu-ports
-              Suites: noble noble-updates noble-backports noble-security
-              Components: main universe restricted multiverse
-              Architectures: armhf
-              Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+              sudo rm -f /etc/apt/sources.list.d/*.sources
+              cat <<'EOF' | sudo tee /etc/apt/sources.list >/dev/null
+              deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main universe restricted multiverse
+              deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main universe restricted multiverse
+              deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-backports main universe restricted multiverse
+              deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main universe restricted multiverse
+              deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble main universe restricted multiverse
+              deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe restricted multiverse
+              deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble-backports main universe restricted multiverse
+              deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble-security main universe restricted multiverse
               EOF
             install: sudo dpkg --add-architecture armhf && sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf libc6-dev-armhf-cross libpam0g-dev:armhf
             cc: arm-linux-gnueabihf-gcc
