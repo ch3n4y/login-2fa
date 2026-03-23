@@ -61,8 +61,28 @@ jobs:
           path: dist/${{ matrix.archive }}
 
   build-pam:
-    name: Build PAM Module (linux-amd64)
+    name: Build PAM Module (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            goarch: amd64
+            archive: pam_login_2fa-linux-amd64.tar.gz
+            install: sudo apt-get update && sudo apt-get install -y libpam0g-dev
+            cc: gcc
+          - name: linux-arm64
+            goarch: arm64
+            archive: pam_login_2fa-linux-arm64.tar.gz
+            install: sudo dpkg --add-architecture arm64 && sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libpam0g-dev:arm64
+            cc: aarch64-linux-gnu-gcc
+          - name: linux-armv7
+            goarch: arm
+            goarm: "7"
+            archive: pam_login_2fa-linux-armv7.tar.gz
+            install: sudo dpkg --add-architecture armhf && sudo apt-get update && sudo apt-get install -y gcc-arm-linux-gnueabihf libc6-dev-armhf-cross libpam0g-dev:armhf
+            cc: arm-linux-gnueabihf-gcc
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,22 +96,26 @@ jobs:
       - name: Download modules
         run: go mod download
 
-      - name: Install PAM headers
-        run: sudo apt-get update && sudo apt-get install -y libpam0g-dev
+      - name: Install PAM toolchain and headers
+        run: ${{ matrix.install }}
 
       - name: Build PAM module
         env:
           CGO_ENABLED: "1"
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+          CC: ${{ matrix.cc }}
         run: |
           mkdir -p dist/release
           go build -buildmode=c-shared -trimpath -ldflags="-s -w" -o dist/release/pam_login_2fa.so ./cmd/pam_login_2fa
-          tar -C dist/release -czf dist/pam_login_2fa-linux-amd64.tar.gz pam_login_2fa.so pam_login_2fa.h
+          tar -C dist/release -czf dist/${{ matrix.archive }} pam_login_2fa.so pam_login_2fa.h
 
       - name: Upload PAM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pam-login-2fa-linux-amd64
-          path: dist/pam_login_2fa-linux-amd64.tar.gz
+          name: pam-${{ matrix.name }}
+          path: dist/${{ matrix.archive }}
 
   release:
     name: Publish Release
@@ -112,7 +136,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist/artifacts
-          name: pam-login-2fa-linux-amd64
+          pattern: pam-linux-*
+          merge-multiple: true
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2

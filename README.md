@@ -43,6 +43,16 @@ TARGET_ARCH=arm TARGET_ARM=7 ./scripts/build_login_2fa_go.sh
 TARGET_ARCH=arm64 BUILD_PAM=0 ./scripts/build_login_2fa_go.sh
 ```
 
+如果要在 x86_64 主机交叉编译 PAM `.so`，需要对应交叉工具链：
+
+```bash
+# arm64
+apt-get install -y gcc-aarch64-linux-gnu libc6-dev-arm64-cross libpam0g-dev:arm64
+
+# armv7
+apt-get install -y gcc-arm-linux-gnueabihf libc6-dev-armhf-cross libpam0g-dev:armhf
+```
+
 构建脚本每次会随机生成一个新的密钥文件：
 
 - `dist/login-2fa.key`
@@ -67,12 +77,14 @@ Release 当前会生成：
 - `login-2fa-linux-arm64.tar.gz`
 - `login-2fa-linux-armv7.tar.gz`
 - `pam_login_2fa-linux-amd64.tar.gz`
+- `pam_login_2fa-linux-arm64.tar.gz`
+- `pam_login_2fa-linux-armv7.tar.gz`
 
 说明：
 
 - CLI Release 现已支持 `linux-amd64`、`linux-arm64`、`linux-armv7`
-- PAM `.so` 依赖目标系统的 PAM ABI，目前工作流默认发布 `linux-amd64`
-- ARM 平台的 PAM 模块建议在目标 ARM 机器上原生编译
+- PAM `.so` Release 现已支持 `linux-amd64`、`linux-arm64`、`linux-armv7`
+- PAM 交叉编译依赖对应架构的 GCC、libc 和 `libpam0g-dev`
 - 公共 Release 不会附带私密密钥文件，部署时请自行生成并安装
 
 ## 使用

@@ -31,6 +31,18 @@ if [ "$BUILD_PAM" = "1" ]; then
   if [ -n "$TARGET_ARM" ]; then
     PAM_ENV+=(GOARM="$TARGET_ARM")
   fi
+  if [ -z "${CC:-}" ]; then
+    case "$TARGET_ARCH" in
+      amd64)
+        ;;
+      arm64)
+        PAM_ENV+=(CC=aarch64-linux-gnu-gcc)
+        ;;
+      arm)
+        PAM_ENV+=(CC=arm-linux-gnueabihf-gcc)
+        ;;
+    esac
+  fi
   env "${PAM_ENV[@]}" go build -buildmode=c-shared -trimpath -ldflags="-s -w" -o dist/pam_login_2fa.so ./cmd/pam_login_2fa
 fi
 
