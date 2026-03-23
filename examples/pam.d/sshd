@@ -1,0 +1,2 @@
+# Example PAM snippet for sshd
+auth required pam_login_2fa.so
