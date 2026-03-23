@@ -11,8 +11,25 @@ permissions:
 
 jobs:
   build-cli:
-    name: Build CLI (linux-amd64)
+    name: Build CLI (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            goos: linux
+            goarch: amd64
+            archive: login-2fa-linux-amd64.tar.gz
+          - name: linux-arm64
+            goos: linux
+            goarch: arm64
+            archive: login-2fa-linux-arm64.tar.gz
+          - name: linux-armv7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+            archive: login-2fa-linux-armv7.tar.gz
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,18 +46,19 @@ jobs:
       - name: Build CLI
         env:
           CGO_ENABLED: "0"
-          GOOS: linux
-          GOARCH: amd64
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
         run: |
           mkdir -p dist/release
           go build -trimpath -ldflags="-s -w" -o dist/release/login-2fa ./cmd/login-2fa
-          tar -C dist/release -czf dist/login-2fa-linux-amd64.tar.gz login-2fa
+          tar -C dist/release -czf dist/${{ matrix.archive }} login-2fa
 
       - name: Upload CLI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: login-2fa-linux-amd64
-          path: dist/login-2fa-linux-amd64.tar.gz
+          name: ${{ matrix.name }}
+          path: dist/${{ matrix.archive }}
 
   build-pam:
     name: Build PAM Module (linux-amd64)
@@ -87,7 +105,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist/artifacts
-          pattern: login-2fa-*
+          pattern: linux-*
           merge-multiple: true
 
       - name: Download PAM artifact
